@@ -1,5 +1,3 @@
-use std::iter;
-
 fn prob1(lines: Vec<&str>) -> usize {
     let lu8 = as_ints(lines);
     let mut count = 0usize;
