@@ -90,7 +90,7 @@ pub(crate) fn main() {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::day_5::{make_rules_and_updates, prob1, prob2};
+    use super::{make_rules_and_updates, prob1, prob2};
 
     fn input() -> Vec<&'static str> {
         vec![

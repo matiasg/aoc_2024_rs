@@ -89,10 +89,7 @@ pub(crate) fn main() {
 
 #[cfg(test)]
 pub mod tests {
-
-    use crate::day_7::{apply2, expressable, prob2};
-
-    use super::{apply, expressable2, parse, prob1};
+    use super::{apply, apply2, expressable, expressable2, parse, prob1, prob2};
 
     fn input() -> Vec<&'static str> {
         vec![

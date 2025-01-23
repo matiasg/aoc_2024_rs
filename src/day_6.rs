@@ -137,7 +137,7 @@ pub(crate) fn main() {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::day_6::{prob1, prob2, Maze};
+    use super::{prob1, prob2, Maze};
 
     fn input() -> Vec<&'static str> {
         vec![

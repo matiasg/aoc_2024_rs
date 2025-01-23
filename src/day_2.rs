@@ -55,7 +55,7 @@ pub fn main() {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::day_2::{parse_lines, prob1, prob2};
+    use super::{parse_lines, prob1, prob2};
 
     fn input() -> Vec<&'static str> {
         vec![

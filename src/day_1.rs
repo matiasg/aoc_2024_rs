@@ -60,7 +60,7 @@ pub(crate) fn main() {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::day_1::{do_prob_1, do_prob_2};
+    use super::{do_prob_1, do_prob_2};
 
     fn input() -> Vec<&'static str> {
         vec!["3   4", "4   3", "2   5", "1   3", "3   9", "3   3"]
