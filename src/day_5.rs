@@ -15,9 +15,6 @@ impl Rules {
             order: HashMap::new(),
         }
     }
-    fn len(&self) -> usize {
-        self.order.len()
-    }
     fn add(&mut self, from: usize, to: usize) {
         self.order.entry(from).or_default().insert(to);
     }
@@ -133,7 +130,7 @@ pub mod tests {
         let (rules, updates) = make_rules_and_updates(&input());
         assert_eq!(updates.len(), 6);
         assert_eq!(updates[2], vec![75, 29, 13]);
-        assert_eq!(rules.len(), 6);
+        assert_eq!(rules.order.len(), 6);
         assert!(rules.is_before(75, 53));
         assert!(!rules.is_before(5, 53));
         assert!(!rules.is_before(53, 75));
