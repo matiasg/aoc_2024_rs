@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+#[allow(clippy::type_complexity)]
 fn parse(lines: &[&str]) -> (HashMap<char, Vec<(isize, isize)>>, isize, isize) {
     let height = lines.len() as isize;
     let width = lines[0].len() as isize;
