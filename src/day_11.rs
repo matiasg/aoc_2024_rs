@@ -1,3 +1,4 @@
+use crate::utils::counter;
 use std::collections::HashMap;
 
 fn parse(input: &str) -> Vec<usize> {
@@ -31,18 +32,6 @@ fn blink_n_times(mut ns: Vec<usize>, times: usize) -> usize {
         ns = blink_on_vec(ns);
     }
     ns.len()
-}
-
-fn counter<I>(ns: I) -> HashMap<I::Item, usize>
-where
-    I: IntoIterator,
-    I::Item: Eq + core::hash::Hash,
-{
-    let mut ret: HashMap<I::Item, usize> = HashMap::new();
-    for n in ns {
-        *ret.entry(n).or_default() += 1;
-    }
-    ret
 }
 
 fn blink_n_times_map(ns: Vec<usize>, times: usize) -> usize {
