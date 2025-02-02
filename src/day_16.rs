@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::utils::DiGraph;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 enum Orientation {
     East,
     South,

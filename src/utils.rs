@@ -1,6 +1,7 @@
 use num::{Bounded, Zero};
 use std::{
-    collections::{HashMap, HashSet},
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap, HashSet},
     ops::Add,
 };
 
@@ -90,33 +91,38 @@ where
     ) -> HashMap<I, V>
     where
         II: IntoIterator<Item = I>,
-        I: std::fmt::Debug,
-        V: Add + Bounded + Zero + Ord + Copy,
+        I: std::fmt::Debug + Ord,
+        V: Add + Bounded + Zero + Ord + Copy + std::fmt::Debug,
     {
+        // optimization: get children in weights fast
+        let mut wchildren: HashMap<I, HashSet<I>> = HashMap::new();
+        for (f, t) in weights.keys().copied() {
+            wchildren.entry(f).or_default().insert(t);
+        }
         let ends: HashSet<I> = ends.into_iter().collect();
         let mut ret: HashMap<I, V> = HashMap::new();
-        let mut unvisited: HashMap<I, V> =
-            self.nodes.iter().map(|&n| (n, V::max_value())).collect();
-        *unvisited.get_mut(&start).unwrap() = V::zero();
-        while !unvisited.is_empty() && *unvisited.values().min().unwrap() < V::max_value() {
-            let (&node, &dist) = unvisited.iter().min_by_key(|&(_, d)| d).unwrap();
+        let infinity = Reverse(V::max_value());
+        let mut unvisited: BinaryHeap<(Reverse<V>, I)> =
+            self.nodes.iter().map(|&n| (infinity, n)).collect();
+        let mut visited: HashSet<I> = HashSet::new();
+        unvisited.push((Reverse(V::zero()), start));
+        while !unvisited.is_empty() && unvisited.peek().unwrap().0 > infinity {
+            let (rdist, node) = unvisited.pop().unwrap();
+            if visited.contains(&node) {
+                continue;
+            }
+            let Reverse(dist) = rdist;
             if ends.contains(&node) {
                 ret.insert(node, dist);
                 if ret.len() == ends.len() {
                     break;
                 }
             }
-            for (&(_, child), &ndist) in weights.iter().filter(|&((f, _), _)| *f == node) {
-                unvisited
-                    .entry(child)
-                    .and_modify(|d| *d = (dist + ndist).min(*d));
+            for &child in wchildren.entry(node).or_default().iter() {
+                let &ndist = weights.get(&(node, child)).unwrap();
+                unvisited.push((Reverse(dist + ndist), child));
             }
-            unvisited.remove(&node);
-            println!(
-                "removed {node:?}, have {} unvisited, ret: {}",
-                unvisited.len(),
-                ret.len()
-            );
+            visited.insert(node);
         }
         ret
     }
