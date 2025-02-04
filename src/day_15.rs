@@ -179,6 +179,7 @@ impl Maze {
         Some(ret)
     }
 
+    #[allow(dead_code)]
     fn display(&self) {
         let mut d: Vec<String> =
             vec![String::from_iter(vec![' '; self.width as usize]); self.height as usize];

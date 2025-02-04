@@ -40,41 +40,23 @@ impl Orientation {
     }
 }
 
-type IJO = (isize, isize, Orientation);
+type Ijo = (isize, isize, Orientation);
 
 struct Maze {
-    graph: DiGraph<IJO>,
-    weights: HashMap<(IJO, IJO), isize>,
+    graph: DiGraph<Ijo>,
+    weights: HashMap<(Ijo, Ijo), isize>,
     start: (isize, isize, Orientation),
     end: (isize, isize),
 }
 
-fn contiguous(i: isize, j: isize, maxi: isize, maxj: isize) -> Vec<(isize, isize)> {
-    let mut ret = vec![];
-    if i > 0 {
-        ret.push((i - 1, j));
-    }
-    if j > 0 {
-        ret.push((i, j - 1));
-    }
-    if i < maxi - 1 {
-        ret.push((i + 1, j));
-    }
-    if j < maxj - 1 {
-        ret.push((i, j + 1));
-    }
-
-    ret
-}
-
 fn parse(input: &[&str]) -> Maze {
-    let mut start: IJO = (0, 0, Orientation::East);
+    let mut start: Ijo = (0, 0, Orientation::East);
     let mut end: (isize, isize) = (0, 0);
-    let mut nodes: Vec<IJO> = vec![];
-    let edges: Vec<(IJO, IJO)> = vec![];
+    let mut nodes: Vec<Ijo> = vec![];
+    let edges: Vec<(Ijo, Ijo)> = vec![];
     let maxi = input.len() as isize;
     let maxj = input[0].len() as isize;
-    let mut weights: HashMap<(IJO, IJO), isize> = HashMap::new();
+    let mut weights: HashMap<(Ijo, Ijo), isize> = HashMap::new();
     for (i, line) in input.iter().enumerate() {
         let ii = i as isize;
         for (j, c) in line.chars().enumerate() {
@@ -101,7 +83,7 @@ fn parse(input: &[&str]) -> Maze {
             }
         }
     }
-    let graph: DiGraph<IJO> = DiGraph::from(nodes, edges);
+    let graph: DiGraph<Ijo> = DiGraph::from(nodes, edges);
     Maze {
         graph,
         weights,
@@ -117,7 +99,7 @@ fn prob1(input: &[&str]) -> isize {
             m.start,
             Orientation::iter()
                 .map(|o| (m.end.0, m.end.1, o))
-                .collect::<Vec<IJO>>(),
+                .collect::<Vec<Ijo>>(),
             m.weights,
         )
         .values()
@@ -128,20 +110,20 @@ fn prob1(input: &[&str]) -> isize {
 fn prob2(input: &[&str]) -> usize {
     let mindist = Reverse(prob1(input));
     let m = parse(input);
-    let ends: Vec<IJO> = Orientation::iter().map(|o| (m.end.0, m.end.1, o)).collect();
+    let ends: Vec<Ijo> = Orientation::iter().map(|o| (m.end.0, m.end.1, o)).collect();
     // somewhat copy distance_with but keeping track of paths
-    let mut wchildren: HashMap<IJO, HashSet<IJO>> = HashMap::new();
+    let mut wchildren: HashMap<Ijo, HashSet<Ijo>> = HashMap::new();
     for (f, t) in m.weights.keys().copied() {
         wchildren.entry(f).or_default().insert(t);
     }
-    let ends: HashSet<IJO> = ends.into_iter().collect();
-    let mut ret: HashSet<IJO> = HashSet::new();
+    let ends: HashSet<Ijo> = ends.into_iter().collect();
+    let mut ret: HashSet<Ijo> = HashSet::new();
 
-    let mut shortest_used: HashMap<IJO, HashSet<IJO>> = HashMap::new();
+    let mut shortest_used: HashMap<Ijo, HashSet<Ijo>> = HashMap::new();
     shortest_used.insert(m.start, HashSet::from([m.start]));
-    let mut shortest_length: HashMap<IJO, isize> = HashMap::from([(m.start, 0)]);
+    let mut shortest_length: HashMap<Ijo, isize> = HashMap::from([(m.start, 0)]);
 
-    let mut unvisited: BinaryHeap<(Reverse<isize>, IJO)> = BinaryHeap::new();
+    let mut unvisited: BinaryHeap<(Reverse<isize>, Ijo)> = BinaryHeap::new();
     unvisited.push((Reverse(0), m.start));
     while !unvisited.is_empty() && unvisited.peek().unwrap().0 >= mindist {
         let (rdist, node) = unvisited.pop().unwrap();
@@ -156,7 +138,7 @@ fn prob2(input: &[&str]) -> usize {
             let &node_child_length = m.weights.get(&(node, child)).unwrap();
 
             let new_length = start_node_length + node_child_length;
-            let new_used: HashSet<IJO> = shortest_used
+            let new_used: HashSet<Ijo> = shortest_used
                 .get(&node)
                 .unwrap()
                 .iter()

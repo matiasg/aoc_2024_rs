@@ -17,13 +17,13 @@ where
     ret
 }
 
-pub(crate) struct DiGraph<I> {
-    pub(crate) nodes: Vec<I>,
-    pub(crate) edges: Vec<(I, I)>,
+pub struct DiGraph<I> {
+    pub nodes: Vec<I>,
+    pub edges: Vec<(I, I)>,
 }
 
 impl<I> DiGraph<I> {
-    pub(crate) fn from<II, EE>(nodes: II, edges: EE) -> DiGraph<I>
+    pub fn from<II, EE>(nodes: II, edges: EE) -> DiGraph<I>
     where
         II: IntoIterator<Item = I>,
         EE: IntoIterator<Item = (I, I)>,
@@ -34,8 +34,12 @@ impl<I> DiGraph<I> {
         }
     }
 
-    pub(crate) fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.nodes.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
     }
 
     fn children(&self, from: I) -> HashSet<I>
@@ -54,7 +58,7 @@ impl<I> DiGraph<I>
 where
     I: Eq + core::hash::Hash + Copy,
 {
-    fn distance(&self, start: I, end: I) -> Option<usize> {
+    pub fn distance(&self, start: I, end: I) -> Option<usize> {
         if start == end {
             return Some(0);
         }
@@ -83,7 +87,7 @@ where
     }
 
     /// disregards the nodes
-    pub(crate) fn distance_with<II, V>(
+    pub fn distance_with<II, V>(
         &self,
         start: I,
         ends: II,

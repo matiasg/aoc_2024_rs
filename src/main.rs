@@ -14,7 +14,7 @@ mod day_6;
 mod day_7;
 mod day_8;
 mod day_9;
-mod utils;
+pub mod utils;
 
 use std::env;
 
