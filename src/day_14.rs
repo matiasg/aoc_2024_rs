@@ -147,6 +147,5 @@ pub mod tests {
             let ps: Vec<(isize, isize)> = pvs.iter().map(|pv| pv.pos_after(t, 11, 7)).collect();
             display(&ps, 11, 7);
         }
-        assert!(false);
     }
 }
