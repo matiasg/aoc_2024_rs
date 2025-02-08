@@ -130,6 +130,11 @@ fn check(rega: Vec<isize>, m0: &Machine, expected: &[isize]) -> bool {
     m.output[len - rega.len()] == expected[len - rega.len()]
 }
 
+/// Looking at the program, each cycle it prints one value
+/// and it divides register A by 8. The last value output is
+/// given by the first digit of reg. A in base 8. The second to last
+/// is given by the first two digits, and so on.
+/// So this is a DFS on reg. A written in base 8.
 fn tree_check(rega: Vec<isize>, m0: &Machine, expected: &[isize]) -> Option<Vec<isize>> {
     if rega.len() == expected.len() {
         return Some(rega);
