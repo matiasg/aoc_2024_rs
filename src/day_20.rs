@@ -61,7 +61,8 @@ fn prob2(input: &[&str], max_dist: isize, min_save: usize) -> usize {
         i: m.height - 1,
         j: m.width - 1,
     };
-    let mdists = mdig.all_distances();
+    let sdists = mdig.distances_from(m.start);
+    let edists = mdig.distances_from(m.end);
     let mut ret = 0usize;
     for &ij in empty.iter() {
         for kl in ij.closer_than_and_bounded(max_dist, minij, maxij) {
@@ -74,8 +75,8 @@ fn prob2(input: &[&str], max_dist: isize, min_save: usize) -> usize {
                 continue;
             }
             let drev = ij.distance(&kl) as usize;
-            let dsij = mdists.get(&m.start, &ij).unwrap();
-            let dkle = mdists.get(&kl, &m.end).unwrap();
+            let dsij = sdists.get(&ij).unwrap();
+            let dkle = edists.get(&kl).unwrap();
             let dtot = dsij + drev + dkle;
             if dtot + min_save <= d0 {
                 ret += 1;

@@ -87,6 +87,15 @@ where
         None
     }
 
+    pub fn distances_from(&self, start: I) -> HashMap<I, usize>
+    where
+        I: std::fmt::Debug + Ord,
+    {
+        let weights: HashMap<(I, I), usize> =
+            self.edges.iter().map(|&(a, b)| ((a, b), 1)).collect();
+        self.distance_with(start, self.nodes.clone(), weights)
+    }
+
     /// disregards the nodes
     pub fn distance_with<II, V>(
         &self,
@@ -162,14 +171,6 @@ where
             }
         }
         Distances { num, dist: ret }
-        // let mut rett: HashMap<(I, I), usize> = HashMap::new();
-        // for a in self.nodes.iter() {
-        //     for b in self.nodes.iter() {
-        //         let d = ret[num[a]][num[b]];
-        //         rett.insert((*a, *b), d);
-        //     }
-        // }
-        // rett
     }
 }
 
