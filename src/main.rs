@@ -10,6 +10,7 @@ mod day_17;
 mod day_18;
 mod day_19;
 mod day_2;
+mod day_20;
 mod day_3;
 mod day_4;
 mod day_5;
@@ -42,6 +43,7 @@ fn main() {
         day_17::main,
         day_18::main,
         day_19::main,
+        day_20::main,
     ];
 
     let args: Vec<String> = env::args().collect();
