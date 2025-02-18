@@ -1,4 +1,4 @@
-use itertools::{iproduct, Itertools};
+use itertools::iproduct;
 use std::collections::{HashMap, HashSet};
 
 use crate::utils::{Maze, IJ};

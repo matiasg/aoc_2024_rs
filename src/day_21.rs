@@ -1,5 +1,53 @@
 use std::collections::{HashMap, HashSet};
 
+#[derive(Hash, Eq, PartialEq, Debug)]
+struct SeqIter {
+    sequence: String,
+    iteration: usize,
+}
+
+struct Lengths {
+    nodes: HashMap<SeqIter, usize>,
+    max_iteration: usize,
+}
+
+impl Lengths {
+    fn with_max_iteration(max_iteration: usize) -> Self {
+        Self {
+            nodes: HashMap::new(),
+            max_iteration,
+        }
+    }
+    fn get_len_at(&mut self, pad: &Pad, seq: String, iteration: usize) -> usize {
+        if iteration == self.max_iteration {
+            return seq.len();
+        }
+        let si = SeqIter {
+            sequence: seq.clone(),
+            iteration,
+        };
+        if let Some(&len) = self.nodes.get(&si) {
+            return len;
+        }
+        let seq_in_pad = pad.write(seq.clone());
+        let min = seq_in_pad
+            .iter()
+            .map(|w| {
+                let mw: usize = w
+                    .replace("A", "A:")
+                    .split(':')
+                    .filter(|&s| !s.is_empty())
+                    .map(|s| self.get_len_at(pad, s.to_string(), iteration + 1))
+                    .sum();
+                mw
+            })
+            .min()
+            .unwrap();
+        self.nodes.insert(si, min);
+        min
+    }
+}
+
 struct Pad {
     symbols: HashMap<char, (isize, isize)>,
     forbidden: HashSet<(isize, isize)>,
@@ -93,20 +141,13 @@ fn pads() -> (Pad, Pad) {
     )
 }
 
-fn shortest_way(pad: &Pad, word: String) -> String {
-    pad.write(word)
-        .iter()
-        .filter(|&w| pad.good_word(w.clone()))
-        .min_by_key(|w| w.len())
-        .unwrap()
-        .to_string()
-}
-fn shortest_instruction(word: String) -> String {
+fn shortest_instruction(word: String, num_pads: usize) -> String {
     let (pad0, pad1) = pads();
-    let words1 = pad0.write(word);
-    let words2: Vec<String> = words1.iter().flat_map(|w| pad1.write(w.clone())).collect();
-    let words3: Vec<String> = words2.iter().flat_map(|w| pad1.write(w.clone())).collect();
-    words3.iter().min_by_key(|&w| w.len()).unwrap().clone()
+    let mut words = pad0.write(word.clone());
+    for _ in 0..num_pads {
+        words = words.iter().flat_map(|w| pad1.write(w.clone())).collect();
+    }
+    words.iter().min_by_key(|&w| w.len()).unwrap().clone()
 }
 
 fn complexity(word: String) -> usize {
@@ -121,27 +162,40 @@ fn prob1(input: &[&str]) -> usize {
     input
         .iter()
         .map(|&w| {
-            let sil = shortest_instruction(w.to_string());
+            let sil = shortest_instruction(w.to_string(), 2);
             let comp = complexity(w.to_string());
-            println!("{w} -> {sil} * {comp}");
             sil.len() * comp
         })
         .sum()
 }
 
-fn prob2(input: &[&str]) -> usize {
-    0
+fn prob2(input: &[&str], max_iteration: usize) -> usize {
+    let (pad0, pad1) = pads();
+    let mut lengths = Lengths::with_max_iteration(max_iteration);
+    input
+        .iter()
+        .map(|w| {
+            let comp = complexity(w.to_string());
+            let words = pad0.write(w.to_string());
+            let len = words
+                .iter()
+                .map(|ws| lengths.get_len_at(&pad1, ws.to_string(), 1))
+                .min()
+                .unwrap();
+            comp * len
+        })
+        .sum()
 }
 
 pub(crate) fn main() {
     let input: Vec<&str> = include_str!("../input/day_21").trim().split("\n").collect();
     println!("prob1: {}", prob1(&input.clone()));
-    println!("prob2: {}", prob2(&input.clone()));
+    println!("prob2: {}", prob2(&input.clone(), 26));
 }
 
 #[cfg(test)]
 pub mod tests {
-    use super::{prob1, prob2, shortest_instruction, Pad};
+    use super::{pads, prob1, prob2, shortest_instruction, Lengths, Pad};
 
     fn input() -> Vec<&'static str> {
         vec!["029A", "980A", "179A", "456A", "379A"]
@@ -158,13 +212,21 @@ pub mod tests {
     #[test]
     fn test_shortest() {
         assert_eq!(
-            shortest_instruction("029A".to_string()).len(),
+            shortest_instruction("029A".to_string(), 2).len(),
             "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A".len()
         );
         assert_eq!(
-            shortest_instruction("179A".to_string()).len(),
+            shortest_instruction("179A".to_string(), 2).len(),
             "<v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A".len()
         );
+    }
+
+    #[test]
+    fn test_lengths() {
+        let mut lengths = Lengths::with_max_iteration(3);
+        let (_, pad1) = pads();
+        let asp1 = shortest_instruction("0".to_string(), 2);
+        assert_eq!(lengths.get_len_at(&pad1, "<A".to_string(), 1), asp1.len());
     }
 
     #[test]
@@ -174,6 +236,6 @@ pub mod tests {
 
     #[test]
     fn test_prob2() {
-        assert_eq!(prob2(&input()), 1);
+        assert_eq!(prob2(&input(), 3), 126384);
     }
 }
