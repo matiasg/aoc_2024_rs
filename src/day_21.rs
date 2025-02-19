@@ -190,6 +190,8 @@ fn prob2(input: &[&str], max_iteration: usize) -> usize {
 pub(crate) fn main() {
     let input: Vec<&str> = include_str!("../input/day_21").trim().split("\n").collect();
     println!("prob1: {}", prob1(&input.clone()));
+    // equivalent to:
+    // println!("prob1: {}", prob2(&input.clone(), 3));
     println!("prob2: {}", prob2(&input.clone(), 26));
 }
 
