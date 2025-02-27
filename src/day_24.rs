@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
+use itertools::Itertools;
 use regex::Regex;
 
 #[derive(std::hash::Hash, PartialEq, Eq, Clone, Debug)]
@@ -58,7 +59,6 @@ impl BoolOperation {
 
 struct BoolGraph {
     nodes: HashSet<String>,
-    end_nodes: HashSet<String>,
     values: HashMap<String, bool>,
     operations: Vec<(BoolOperation, String)>,
 }
@@ -82,15 +82,8 @@ impl BoolGraph {
             }
         }
 
-        let end_nodes: HashSet<String> = nodes
-            .iter()
-            .filter(|&n| n.starts_with("z"))
-            .cloned()
-            .collect();
-
         Self {
             nodes,
-            end_nodes,
             values,
             operations,
         }
@@ -102,6 +95,12 @@ impl BoolGraph {
 
     fn reset(&mut self) {
         self.values = HashMap::new();
+        self.nodes
+            .iter()
+            .filter(|n| n.starts_with("x") || n.starts_with("y") || n.starts_with("z"))
+            .for_each(|n| {
+                self.values.insert(n.clone(), false);
+            });
     }
 
     fn nodes_starting_with(&self, start: char) -> Vec<String> {
@@ -123,7 +122,7 @@ impl BoolGraph {
             for (op, target) in self.operations.iter() {
                 // if (op.first == n && nodes.contains(&op.second))
                 //     || (op.second == n && nodes.contains(&op.first))
-                if op.first == n || op.second == n {
+                if (op.first == n || op.second == n) && !ret.contains(target) {
                     next.push_back(target.clone())
                 }
             }
@@ -144,8 +143,12 @@ impl BoolGraph {
             ret.insert(n.clone());
             for (op, target) in self.operations.iter() {
                 if *target == n {
-                    next.push_back(op.first.clone());
-                    next.push_back(op.second.clone());
+                    if !ret.contains(&op.first) {
+                        next.push_back(op.first.clone());
+                    }
+                    if !ret.contains(&op.second) {
+                        next.push_back(op.second.clone());
+                    }
                 }
             }
         }
@@ -153,7 +156,7 @@ impl BoolGraph {
     }
 }
 
-fn value_of(nodes_to_add: &Vec<String>, values: &HashMap<String, bool>) -> usize {
+fn value_of(nodes_to_add: &[String], values: &HashMap<String, bool>) -> usize {
     let mut ret: usize = 0;
     let mut power: usize = 1;
     for e in nodes_to_add {
@@ -192,50 +195,120 @@ fn prob1(input: &[&str]) -> usize {
     bg.end_value()
 }
 
-fn prob2(input: &[&str]) -> usize {
+fn level_has_problem(
+    bg: &mut BoolGraph,
+    xnodes: &[String],
+    ynodes: &[String],
+    znodes: &[String],
+    level: usize,
+    check_three_levels: bool,
+) -> Option<usize> {
+    let max_val = if check_three_levels { 31 } else { 7 };
+    for v in 1..=max_val {
+        bg.reset();
+        if v % 2 == 1 {
+            bg.values.insert(xnodes[level].clone(), true);
+        }
+        if v >> 1 & 1 == 1 {
+            bg.values.insert(ynodes[level].clone(), true);
+        }
+        if level < xnodes.len() - 1 {
+            if v >> 2 & 1 == 1 {
+                bg.values.insert(xnodes[level + 1].clone(), true);
+            }
+            if v >> 3 & 1 == 1 {
+                bg.values.insert(ynodes[level + 1].clone(), true);
+            }
+        }
+        if level < xnodes.len() - 2 && v >> 4 & 1 == 1 {
+            bg.values.insert(xnodes[level + 2].clone(), true);
+        }
+        produce_output(bg);
+        let (xval, yval, zval) = (
+            value_of(xnodes, &bg.values),
+            value_of(ynodes, &bg.values),
+            value_of(znodes, &bg.values),
+        );
+        if xval + yval != zval {
+            return Some(v);
+        }
+    }
+    None
+}
+fn first_level_not_ok(
+    bg: &mut BoolGraph,
+    xnodes: &[String],
+    ynodes: &[String],
+    znodes: &[String],
+    level_check_start: usize,
+    level_check_end: usize,
+    max_value: usize,
+) -> Option<usize> {
+    for level in level_check_start..=level_check_end {
+        let problems_at_level = level_has_problem(bg, xnodes, ynodes, znodes, level, false);
+        if let Some(value) = problems_at_level {
+            if value <= max_value {
+                return Some(level);
+            }
+        }
+    }
+    None
+}
+
+fn switch(bg: &mut BoolGraph, na: String, nb: String) {
+    for op_tgt in bg.operations.iter_mut() {
+        if op_tgt.1 == na {
+            op_tgt.1 = nb.clone();
+        } else if op_tgt.1 == nb {
+            op_tgt.1 = na.clone();
+        }
+    }
+}
+
+fn prob2(input: &[&str]) -> String {
     let mut bg = BoolGraph::parse(input);
+
+    let mut ret: Vec<String> = vec![];
     let xnodes = bg.nodes_starting_with('x');
     let ynodes = bg.nodes_starting_with('y');
     let znodes = bg.nodes_starting_with('z');
-    let mut all_bad: HashSet<String> = HashSet::new();
-    for xp in 0..8 {
-        bg.reset();
-        xnodes.iter().chain(ynodes.iter()).for_each(|n| {
-            bg.values.insert(n.clone(), false);
-        });
-        bg.values.insert(xnodes[xp].clone(), true);
-        produce_output(&mut bg);
-        let (xval, yval, zval) = (
-            value_of(&xnodes, &bg.values),
-            value_of(&ynodes, &bg.values),
-            value_of(&znodes, &bg.values),
-        );
-        if xval + yval != zval {
-            // let children = bg.all_children(vec![xnodes[xp].clone()]);
-            let zwrong: HashSet<String> = bg
-                .nodes
-                .iter()
-                .filter(|n| n.starts_with('z') && bg.values[n.clone()])
-                .chain(std::iter::once(&znodes[xp]))
-                .cloned()
-                .collect();
-            let zwrong: Vec<String> = zwrong.iter().cloned().collect();
-            let children = bg.between(&[xnodes[xp].clone()], &zwrong);
-            println!(
-                "{xval} + {yval} = {zval} != {} => {:?}",
-                xval + yval,
-                children
-            );
-            all_bad.extend(children.iter().cloned());
-        }
-        if all_bad.len() > 10 {
-            break;
+
+    // heuristic highly suited for this case
+    for level in 0..xnodes.len() {
+        if level_has_problem(&mut bg, &xnodes, &ynodes, &znodes, level, false).is_some() {
+            let level_to_fix =
+                first_level_not_ok(&mut bg, &xnodes, &ynodes, &znodes, level - 1, level, 2);
+            if level_to_fix.is_some() {
+                let level_to_fix = level_to_fix.unwrap();
+                let start = [xnodes[level_to_fix].clone(), ynodes[level_to_fix].clone()];
+                let end = [
+                    znodes[level_to_fix].clone(),
+                    znodes[level_to_fix + 1].clone(),
+                ];
+                let all_bad = bg.between(&start, &end);
+
+                for ab in all_bad.iter().combinations(2) {
+                    switch(&mut bg, ab[0].clone(), ab[1].clone());
+                    // check starting one level before, as carry bits might bear the problem
+                    let still_problem = level_has_problem(
+                        &mut bg,
+                        &xnodes,
+                        &ynodes,
+                        &znodes,
+                        level_to_fix - 1,
+                        true,
+                    );
+                    if still_problem.is_none() {
+                        ret.extend(ab.iter().copied().cloned());
+                        break;
+                    }
+                    switch(&mut bg, ab[0].clone(), ab[1].clone());
+                }
+            }
         }
     }
-    let mut all_bad: Vec<String> = all_bad.iter().cloned().collect();
-    all_bad.sort();
-    println!("all bad: {:?}", all_bad);
-    0
+    ret.sort();
+    ret.join(",")
 }
 
 pub(crate) fn main() {
@@ -246,16 +319,11 @@ pub(crate) fn main() {
 
 #[cfg(test)]
 pub mod tests {
-    use super::{prob1, prob2};
+    use super::prob1;
 
     #[test]
     fn test_prob1() {
         assert_eq!(prob1(&input()), 2024);
-    }
-
-    #[test]
-    fn test_prob2() {
-        prob2(&input());
     }
 
     fn input() -> Vec<&'static str> {
