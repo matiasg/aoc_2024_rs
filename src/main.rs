@@ -57,9 +57,22 @@ fn main() {
     ];
 
     let args: Vec<String> = env::args().collect();
-    let day: usize = args[1].parse().expect("can't understand day to run");
+    if args.len() < 2 {
+        panic!(
+            "can't understand day to run. Add an argument from 1 to {} for the day.",
+            mains.len()
+        )
+    }
+    let day: usize = args[1].parse().unwrap_or_else(|_| {
+        panic!(
+            "can't understand day to run. Add an argument from 1 to {} for the day.",
+            mains.len()
+        )
+    });
     match day {
-        i if i > mains.len() || i < 1 => panic!("No day {day}"),
+        i if i > mains.len() || i < 1 => {
+            panic!("No day {day}. Days range from 1 to {}.", mains.len())
+        }
         i => mains[i - 1](),
     };
 }
